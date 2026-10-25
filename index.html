@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>TV player</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #player { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="player"></div>
+<script>
+/*
+ * A YouTube player for a TV app that runs from a local file (webOS Developer Mode): YouTube refuses embeds from pages
+ * without an address (error 153), so the app shows this page, and YouTube sees a normal https page.
+ * ?v=VIDEO_ID [&mute=1] [&loop=1]. It tells the app what happens (ready, playing, ended, error) with postMessage
+ * {tvPlayer: event, ...}, and takes {tvPlayer: 'play' | 'pause' | 'mute' | 'unmute'}.
+ * ES5 only: the TV runs Chrome 53.
+ */
+(function () {
+  'use strict';
+  function param(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  var id = param('v'), mute = param('mute') === '1', loop = param('loop') === '1', player = null;
+
+  function tell(event, data) {
+    if (window.parent === window) return;
+    var msg = {tvPlayer: event};
+    for (var k in data || {}) msg[k] = data[k];
+    window.parent.postMessage(JSON.stringify(msg), '*');
+  }
+
+  if (!/^[A-Za-z0-9_-]{6,20}$/.test(id)) { tell('error', {code: 'bad-id'}); return; }
+
+  window.onYouTubeIframeAPIReady = function () {
+    player = new YT.Player('player', {
+      videoId: id,
+      width: '100%',
+      height: '100%',
+      playerVars: {autoplay: 1, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, playsinline: 1,
+        rel: 0, mute: mute ? 1 : 0, loop: loop ? 1 : 0, playlist: loop ? id : undefined},
+      events: {
+        onReady: function () { if (mute) player.mute(); player.playVideo(); tell('ready'); },
+        onStateChange: function (e) {
+          if (e.data === 1) tell('playing', {duration: player.getDuration()});
+          else if (e.data === 0) tell('ended');
+          else if (e.data === 2) tell('paused');
+        },
+        onError: function (e) { tell('error', {code: e.data}); }
+      }
+    });
+  };
+
+  window.addEventListener('message', function (e) {
+    var m;
+    try { m = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+    if (!m || !player || !m.tvPlayer) return;
+    if (m.tvPlayer === 'play') player.playVideo();
+    else if (m.tvPlayer === 'pause') player.pauseVideo();
+    else if (m.tvPlayer === 'mute') player.mute();
+    else if (m.tvPlayer === 'unmute') { player.unMute(); player.setVolume(100); }
+  });
+
+  var s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = function () { tell('error', {code: 'api'}); };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
