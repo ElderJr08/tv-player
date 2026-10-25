@@ -43,9 +43,14 @@
       width: '100%',
       height: '100%',
       playerVars: {autoplay: 1, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, playsinline: 1,
-        rel: 0, mute: mute ? 1 : 0, loop: loop ? 1 : 0, playlist: loop ? id : undefined},
+        rel: 0, cc_load_policy: 0, mute: mute ? 1 : 0, loop: loop ? 1 : 0, playlist: loop ? id : undefined},
       events: {
-        onReady: function () { if (mute) player.mute(); player.playVideo(); tell('ready'); },
+        onReady: function () {
+          if (mute) player.mute();
+          try { player.unloadModule('captions'); player.unloadModule('cc'); } catch (err) {}   // no captions over the picture
+          player.playVideo();
+          tell('ready');
+        },
         onStateChange: function (e) {
           if (e.data === 1) tell('playing', {duration: player.getDuration()});
           else if (e.data === 0) tell('ended');
