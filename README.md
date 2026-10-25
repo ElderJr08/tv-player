@@ -6,4 +6,4 @@ YouTube refuses embedded players on pages without a web address (error 153). The
 instead, so the trailer plays inside the app: `https://elderjr08.github.io/tv-player/?v=VIDEO_ID&mute=1`.
 
 It holds no keys or personal data: only the player. It reports what happens to the app with `postMessage`
-(`{tvPlayer: 'ready' | 'playing' | 'paused' | 'ended' | 'error'}`) and takes `play`, `pause`, `mute` and `unmute`.
+(`{tvPlayer: 'ready' | 'playing' | 'paused' | 'ended' | 'error'}`) and takes `play`, `pause`, `mute`, `unmute` and `restart`.

@@ -17,7 +17,7 @@
  * A YouTube player for a TV app that runs from a local file (webOS Developer Mode): YouTube refuses embeds from pages
  * without an address (error 153), so the app shows this page, and YouTube sees a normal https page.
  * ?v=VIDEO_ID [&mute=1] [&loop=1]. It tells the app what happens (ready, playing, ended, error) with postMessage
- * {tvPlayer: event, ...}, and takes {tvPlayer: 'play' | 'pause' | 'mute' | 'unmute'}.
+ * {tvPlayer: event, ...}, and takes {tvPlayer: 'play' | 'pause' | 'mute' | 'unmute' | 'restart'}.
  * ES5 only: the TV runs Chrome 53.
  */
 (function () {
@@ -69,6 +69,7 @@
     else if (m.tvPlayer === 'pause') player.pauseVideo();
     else if (m.tvPlayer === 'mute') player.mute();
     else if (m.tvPlayer === 'unmute') { player.unMute(); player.setVolume(100); }
+    else if (m.tvPlayer === 'restart') { player.seekTo(0, true); player.playVideo(); }
   });
 
   var s = document.createElement('script');
